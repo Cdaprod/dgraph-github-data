@@ -1,0 +1,38 @@
+version: "3.8"
+services:
+  zero:
+    image: dgraph/dgraph:latest
+    volumes:
+      - /tmp/data:/dgraph
+    ports:
+      - 5080:5080
+      - 6080:6080
+    restart: on-failure
+    command: dgraph zero --my=zero:5080
+
+  alpha:
+    image: dgraph/dgraph:latest
+    volumes:
+      - /tmp/data:/dgraph
+    ports:
+      - 8080:8080
+      - 9080:9080
+    restart: on-failure
+    command: dgraph alpha --my=alpha:7080 --zero=zero:5080 --security whitelist=0.0.0.0/0
+
+  ratel:
+    image: dgraph/ratel:latest
+    ports:
+      - 8000:8000
+    command: dgraph-ratel
+
+  graph-data:
+    build:
+      context: ./graph-data
+    image: custom/graph-data:latest
+    depends_on:
+      - alpha
+    volumes:
+      - ./graph-data:/app
+    working_dir: /app
+    command: python load_data.py
